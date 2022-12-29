@@ -78,15 +78,15 @@ def draw_crimes_per_time_graphic(police_report: pd.DataFrame):
     night_shift = night_shift.loc[night_shift['Incident Time'] == True].drop('Incident Time', axis=1)
     night_shift.rename({0: 'Crimes Count'}, axis=1, inplace=True)
 
-    morning_shift = pd.DataFrame(police_report.groupby(police_report['Incident Time'].dt.hour.between(6, 12)).size()).reset_index()
+    morning_shift = pd.DataFrame(police_report.groupby([police_report['Incident Time'].dt.hour.between(6, 12)]).size()).reset_index()
     morning_shift = morning_shift.loc[morning_shift['Incident Time'] == True].drop('Incident Time', axis=1)
     morning_shift.rename({0: 'Crimes Count'}, axis=1, inplace=True)
 
-    daylight_shift = pd.DataFrame(police_report.groupby(police_report['Incident Time'].dt.hour.between(12, 18)).size()).reset_index()
+    daylight_shift = pd.DataFrame(police_report.groupby([police_report['Incident Time'].dt.hour.between(12, 18)]).size()).reset_index()
     daylight_shift = daylight_shift.loc[daylight_shift['Incident Time'] == True].drop('Incident Time', axis=1)
     daylight_shift.rename({0: 'Crimes Count'}, axis=1, inplace=True)
 
-    evening_shift = pd.DataFrame(police_report.groupby(police_report['Incident Time'].dt.hour.between(18, 24)).size()).reset_index()
+    evening_shift = pd.DataFrame(police_report.groupby([police_report['Incident Time'].dt.hour.between(18, 24)]).size()).reset_index()
     evening_shift = evening_shift.loc[evening_shift['Incident Time'] == True].drop('Incident Time', axis=1)
     evening_shift.rename({0: 'Crimes Count'}, axis=1, inplace=True)
 
@@ -97,35 +97,57 @@ def draw_crimes_per_time_graphic(police_report: pd.DataFrame):
 
 def draw_3d_crimes_per_time_graphic(police_report: pd.DataFrame):
     police_report = police_report.loc[police_report['Incident Date'] < datetime.datetime(2022, 1, 1)]
-    night_shift = pd.DataFrame(police_report.groupby([police_report['Incident Time'].dt.hour.between(0, 6)]).size()).reset_index()
+
+    night_shift = pd.DataFrame(police_report.groupby([police_report['Incident Date'].dt.year,
+                                                      police_report['Incident Time'].dt.hour.between(0, 6)]).size()).reset_index()
     night_shift = night_shift.loc[night_shift['Incident Time'] == True].drop('Incident Time', axis=1)
     night_shift.rename({0: 'Crimes Count'}, axis=1, inplace=True)
 
-    morning_shift = pd.DataFrame(police_report.groupby(police_report['Incident Time'].dt.hour.between(6, 12)).size()).reset_index()
+    morning_shift = pd.DataFrame(police_report.groupby([police_report['Incident Date'].dt.year,
+                                                        police_report['Incident Time'].dt.hour.between(6, 12)]).size()).reset_index()
     morning_shift = morning_shift.loc[morning_shift['Incident Time'] == True].drop('Incident Time', axis=1)
     morning_shift.rename({0: 'Crimes Count'}, axis=1, inplace=True)
 
-    daylight_shift = pd.DataFrame(police_report.groupby(police_report['Incident Time'].dt.hour.between(12, 18)).size()).reset_index()
+    daylight_shift = pd.DataFrame(police_report.groupby([police_report['Incident Date'].dt.year,
+                                                         police_report['Incident Time'].dt.hour.between(12, 18)]).size()).reset_index()
     daylight_shift = daylight_shift.loc[daylight_shift['Incident Time'] == True].drop('Incident Time', axis=1)
     daylight_shift.rename({0: 'Crimes Count'}, axis=1, inplace=True)
 
-    evening_shift = pd.DataFrame(police_report.groupby(police_report['Incident Time'].dt.hour.between(18, 24)).size()).reset_index()
+    evening_shift = pd.DataFrame(police_report.groupby([police_report['Incident Date'].dt.year,
+                                                        police_report['Incident Time'].dt.hour.between(18, 24)]).size()).reset_index()
     evening_shift = evening_shift.loc[evening_shift['Incident Time'] == True].drop('Incident Time', axis=1)
     evening_shift.rename({0: 'Crimes Count'}, axis=1, inplace=True)
-
     ax = plt.axes(projection='3d')
-    x_axis = np.array([2018, 2019, 2020, 2021])
+    crimes_for_2018 = pd.concat([night_shift.loc[night_shift['Incident Date'] == 2018],
+                                morning_shift.loc[morning_shift['Incident Date'] == 2018],
+                                daylight_shift.loc[daylight_shift['Incident Date'] == 2018],
+                                evening_shift.loc[evening_shift['Incident Date'] == 2018]])
+    crimes_for_2019 = pd.concat([night_shift.loc[night_shift['Incident Date'] == 2019],
+                                morning_shift.loc[morning_shift['Incident Date'] == 2019],
+                                daylight_shift.loc[daylight_shift['Incident Date'] == 2019],
+                                evening_shift.loc[evening_shift['Incident Date'] == 2019]])
+    crimes_for_2020 = pd.concat([night_shift.loc[night_shift['Incident Date'] == 2020],
+                                morning_shift.loc[morning_shift['Incident Date'] == 2020],
+                                daylight_shift.loc[daylight_shift['Incident Date'] == 2020],
+                                evening_shift.loc[evening_shift['Incident Date'] == 2020]])
+    crimes_for_2021 = pd.concat([night_shift.loc[night_shift['Incident Date'] == 2021],
+                                morning_shift.loc[morning_shift['Incident Date'] == 2021],
+                                daylight_shift.loc[daylight_shift['Incident Date'] == 2021],
+                                evening_shift.loc[evening_shift['Incident Date'] == 2021]])
     y_axis = np.array([6, 12, 18, 24])
-    z_axis = np.array([night_shift['Crimes Count'], morning_shift['Crimes Count'], daylight_shift['Crimes Count'], evening_shift['Crimes Count']]).reshape(-1)
-    ax.plot3D(x_axis, y_axis, z_axis)
+    x_axis = np.array([2018, 2019, 2020, 2021])
+    ax.plot3D(x_axis, y_axis, crimes_for_2018['Crimes Count'], 'green')
+    ax.plot3D(x_axis, y_axis, crimes_for_2019['Crimes Count'], 'blue')
+    ax.plot3D(x_axis, y_axis, crimes_for_2020['Crimes Count'], 'red')
+    ax.plot3D(x_axis, y_axis, crimes_for_2021['Crimes Count'], 'purple')
     plt.show()
 
 
 if __name__ == '__main__':
     police_report = prepare_police_report('Police_Department_Incident_Reports__2018_to_Present.csv')
-    get_crimes_per_year(police_report)
-    get_crimes_per_month(police_report)
-    get_crimes_per_day_of_week(police_report)
-    get_crimes_by_time_periods(police_report)
-    draw_crimes_per_time_graphic(police_report)
+    # get_crimes_per_year(police_report)
+    # get_crimes_per_month(police_report)
+    # get_crimes_per_day_of_week(police_report)
+    # get_crimes_by_time_periods(police_report)
+    # draw_crimes_per_time_graphic(police_report)
     draw_3d_crimes_per_time_graphic(police_report)
